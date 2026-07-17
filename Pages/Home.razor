@@ -1,0 +1,239 @@
+﻿@using MazeGame.Models.Generation
+@using MazeGame.Models.Algorithms
+@using MazeGame.Models.Structure
+@page "/"
+<title>Maze</title>
+
+<div class="app-wrapper">
+    <div class="info">
+
+        <div class="panel instructions">
+            <h2 class="section-title">Instructions</h2>
+            <p>
+                Hold left click to place.
+                <br />
+                Only one start and end position can be placed.
+            </p>
+        </div>
+
+        <div class="panel maze-controls">
+            <h3 class="section-title">Maze Controls</h3>
+
+            <div class="menu-section">
+                <div class="input-group">
+                    <label for="maze-row">Rows</label>
+                    <input id="maze-row" type="range" min="5" max="30" @bind="maze.Rows" @bind:event="oninput" disabled="@isSolving" />
+                    <p>@maze.Rows</p>
+                </div>
+                <div class="input-group">
+                    <label for="maze-column">Columns</label>
+                    <input id="maze-column" type="range" min="5" max="30" @bind="maze.Columns" @bind:event="oninput" disabled="@isSolving" />
+                    <p>@maze.Columns</p>
+                </div>
+            </div>
+
+            <div class="menu-section">
+                <h5>Current Active Placement</h5>
+                <div class="maze-input">
+                    @foreach (MazeCell mazeCell in Enum.GetValues(typeof(MazeCell)))
+                    {
+                        <button class="selection-button @(mazeCell == activeMazeCell ? "active" : "")" @onclick="() => SetActiveCell(mazeCell)">@Enum.GetName(mazeCell)</button>
+                    }
+                </div>
+            </div>
+
+            <div class="menu-section action-buttons">
+                <button class="clear-button" @onclick="Clear">Clear maze</button>
+                <button class="solve-button" @onclick="StartSolve" disabled="@isSolving">Solve</button>
+                <button class="skip-button" @onclick="SkipAnimation" disabled="@(!isSolving || skipAnimation)">Skip</button>
+                <button class="stop-button" @onclick="StopSolve" disabled="@(!isSolving)">Stop</button>
+            </div>
+
+            <div class="menu-section">
+                <button class="solve-button" @onclick="() => GenerateMaze()">Generate Random Maze</button>
+            </div>
+        </div>
+
+        <details class="panel optimization-settings">
+            <summary>
+                <h3 class="section-title inline">Optimization Settings</h3>
+                <p class="description">Edit these if the animations look bad or choppy.</p>
+            </summary>
+
+            <div class="menu-section">
+                <div class="input-group">
+                    <label for="batch-size">Batch size</label>
+                    <p class="description">Affects how often the screen is re-rendered. Lower this if it looks laggy.</p>
+                    <input id="batch-size" type="range" min="1" max="20" @bind="batchSize" @bind:event="oninput"/>
+                    <p>@batchSize</p>
+                </div>
+
+                <div class="input-group">
+                    <label for="animation-speed">Animation speed</label>
+                    <p class="description">Delay (ms) between rendered batches. Lower is faster.</p>
+                    <input id="animation-speed" type="range" min="0" max="100" step="5" @bind="animationDelayMs" @bind:event="oninput"/>
+                    <p>@animationDelayMs ms</p>
+                </div>
+            </div>
+        </details>
+
+    </div>
+
+    <div class="maze-grid" style="--cols:@maze.Columns; --rows:@maze.Rows;" @onmouseleave="StopDragging" @onmouseup="StopDragging">
+        @for (int row = 0; row < maze.Rows; row++)
+        {
+            @for (int column = 0; column < maze.Columns; column++)
+            {
+                int r = row;
+                int c = column;
+                <div class="cell @GetCssForCell(r, c)"
+                    @onmousedown="() => StartDragging(r, c)"
+                    @onmouseover="() => ContinueDragging(r, c)"
+                    @oncontextmenu:preventDefault="true" />
+            }
+        }
+    </div>
+    <p style="color:red;">@errorMessage</p>
+
+</div>
+
+<div class="mobile-warning">
+    <h3>Desktop Required</h3>
+    <hr />
+    <p>This demo was made for devices with mice or trackpads (laptops, PCs, etc).</p>
+    <p>
+        If you're using a touchscreen laptop, please connect a mouse or use the trackpad.
+        If you're on a mobile device, please switch to a desktop.
+    </p>
+    <p>Sorry for the inconvenience!</p>
+</div>
+
+@code {
+
+    MazeCell activeMazeCell = MazeCell.Empty;
+
+    Dictionary<(int, int), AlgorithmState> algorithmState = new();
+    CancellationTokenSource? tokenSource;
+    bool isSolving = false;
+
+    BreadthFirstSearch breadthFirstSearch = new();
+    RecursiveBacktrackGenerator generator = new();
+
+    Maze maze = new();
+
+    bool isDragging = false;
+    MazeCell paintValue = MazeCell.Empty;
+
+    string? errorMessage;
+
+    bool skipAnimation = false;
+
+    int batchSize = 8;
+    int animationDelayMs = 20;
+
+    void StartDragging(int row, int col) {
+        if (isSolving) return;
+        paintValue = activeMazeCell;
+        if (ValidatePlacement()) {
+            maze.SetCell(row, col, paintValue);
+            isDragging = paintValue is MazeCell.Wall || paintValue is MazeCell.Empty;
+        }
+    }
+
+    void ContinueDragging(int row, int col) {
+        if (!isDragging || isSolving) return;
+        maze.SetCell(row, col, paintValue);
+    }
+
+    void StopDragging() {
+        isDragging = false;
+    }
+
+    public string GetCssForCell(int row, int col) {
+        string structureState = maze.GetCell(row, col).ToString().ToLower();
+        string algorithmClass = algorithmState.TryGetValue((row, col), out var state) ? state.ToString().ToLower() : "";
+        return $"{structureState} {algorithmClass}";
+    }
+
+    public void SetActiveCell(MazeCell cell) {
+        activeMazeCell = cell;
+    }
+
+    bool StartExists() => maze.Cells.Any(c => c == MazeCell.Start);
+    bool EndExists() => maze.Cells.Any(c => c == MazeCell.End);
+
+    private bool ValidatePlacement() {
+        if ((paintValue == MazeCell.Start && StartExists()) || (paintValue == MazeCell.End && EndExists())) {
+            errorMessage = $"You can only have one {Enum.GetName(paintValue)?.ToLower()} placed.";
+            return false;
+        }
+        errorMessage = "";
+        return true;
+    }
+
+    private bool CanSolve() {
+        if (!StartExists() || !EndExists()) {
+            errorMessage = "You must have a start and ending cell before attempting to solve.";
+            return false;
+        }
+        errorMessage = "";
+        return true;
+    }
+
+    async Task StartSolve() {
+        if (!CanSolve()) return;
+        tokenSource?.Cancel();
+        tokenSource = new CancellationTokenSource();
+        algorithmState.Clear();
+        isSolving = true;
+        bool pathFound = false;
+        int count = 0;
+        try {
+            await foreach (var step in breadthFirstSearch.Solve(maze, tokenSource.Token)) {
+                algorithmState[(step.Row, step.Col)] = step.State;
+                if (step.State == AlgorithmState.Path) pathFound = true;
+                count++;
+                if (!skipAnimation && count % batchSize == 0) {
+                    StateHasChanged();
+                    await Task.Delay(animationDelayMs, tokenSource.Token);
+                }
+            }
+            if (!pathFound) {
+                errorMessage = "No path exists between Start and End.";
+            }
+        } catch (OperationCanceledException) { }
+        finally {
+            foreach (var key in algorithmState.Keys.ToList()) {
+                if (algorithmState[key] == AlgorithmState.Frontier)
+                    algorithmState[key] = AlgorithmState.Visited;
+            }
+            isSolving = false;
+            skipAnimation = false;
+            StateHasChanged();
+        }
+    }
+
+    void StopSolve() => tokenSource?.Cancel();
+
+    void SkipAnimation() => skipAnimation = true;
+
+
+    void GenerateMaze() {
+        if (isSolving) {
+            errorMessage = "Cannot generate a new maze while simulation is running. Stop first.";
+            return;
+        }
+        generator.Generate(maze);
+        algorithmState.Clear();
+        errorMessage = "";
+    }
+
+    void Clear() {
+        if (isSolving) {
+            errorMessage = "Cannot clear maze while simulation is running. Stop first, then clear.";
+            return;
+        }
+        maze.Clear();
+        algorithmState.Clear();
+    }
+}

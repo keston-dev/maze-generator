@@ -1,0 +1,241 @@
+
+.app-wrapper {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 1rem;
+}
+
+.info {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: min(600px, 100% - 2rem);
+    flex-shrink: 1;
+}
+
+
+.panel {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--color-grid-lines);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    gap: 20px;
+}
+
+.section-title {
+    border-bottom: 2px solid var(--color-grid-lines);
+    width: 100%;
+    padding: 10px;
+    margin: 0;
+}
+
+.section-title.inline {
+    border-bottom: none;
+    padding: 0;
+    display: inline;
+}
+
+.menu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    padding: 0 12px 12px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6fpx;
+    width: 100%;
+}
+
+.description {
+    font-size: .8em;
+    color: grey;
+    margin: 0;
+}
+
+
+.instructions {
+    padding: 0 0 12px;
+}
+
+.instructions p {
+    padding: 0 12px;
+    margin: 0;
+}
+
+
+.maze-input {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.action-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+    flex-wrap: wrap;
+    color: white;
+}
+
+
+.optimization-settings {
+    padding: 0 0 12px;
+    text-align: center;
+}
+
+.optimization-settings summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 10px 12px;    
+}
+
+.optimization-settings summary::-webkit-details-marker {
+    display: none;
+}
+
+.optimization-settings summary::before {
+    content: "▸";
+    display: inline-block;
+    margin-right: 8px;
+    transition: transform 0.15s ease;
+}
+
+.optimization-settings[open] summary::before {
+    transform: rotate(90deg);
+}
+
+.optimization-settings summary .description {
+    margin-top: 4px;
+}
+
+
+button {
+    font-family: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 16px;
+    font-weight: 600;
+    color: white;
+    transition: background-color 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+
+button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    color: white;
+}
+
+button:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+    transform: translateY(0);
+}
+
+.selection-button {
+    border-radius: 12px;
+    background: var(--color-empty);
+    color: #fff;
+}
+
+.selection-button.active {
+    background-color: var(--color-active-selection);
+}
+
+.clear-button, .stop-button {
+    background-color: #E24C4C;
+}
+
+.solve-button {
+    background-color: var(--color-start);
+}
+
+.skip-button {
+    background-color: var(--color-frontier);
+}
+
+
+input[type=range] {
+    accent-color: var(--color-active-selection);
+}
+
+input[type=checkbox] {
+    align-self: self-start;
+}
+
+.maze-grid {
+    display: grid;
+    gap: 1px;
+    background-color: var(--color-wall);
+    grid-template-columns: repeat(var(--cols), 1fr);
+    grid-template-rows: repeat(var(--rows), 1fr);
+    user-select: none;
+    flex: 1;
+    min-width: 0;
+    aspect-ratio: var(--cols) / var(--rows);
+    max-width: calc(var(--cols) * 40px);
+    max-height: 80vh;
+}
+
+.cell {
+    background: var(--color-empty);
+    transition: background-color 0.15s ease, transform 0.15s ease;
+}
+
+.cell.wall { background: var(--color-wall); }
+.cell.start { background: var(--color-start) !important; }
+.cell.end { background: var(--color-end) !important; }
+
+.cell.frontier {
+    background: var(--color-frontier);
+    animation: pulse 0.3s ease;
+}
+
+.cell.visited {
+    background: var(--color-visited);
+    animation: pulse 0.3s ease;
+}
+
+.cell.path {
+    background: var(--color-path);
+    animation: pop 0.25s ease;
+}
+
+.cell.start, .cell.end {
+    animation: glow 2s ease-in-out infinite;
+}
+
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.10); }
+    100% { transform: scale(1); }
+}
+
+@keyframes pop {
+    0% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes glow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.1); }
+    50% { box-shadow: 0 0 8px 2px rgba(255, 255, 255, 0.25); }
+}
+
+
+.mobile-warning { display: none; }
+
+@media (max-width: 900px), (pointer: coarse), (hover: none) {
+    .app-wrapper { display: none; }
+    .mobile-warning {
+        display: block;
+    }
+}
