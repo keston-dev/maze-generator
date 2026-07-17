@@ -5,8 +5,9 @@
   "observability": {
     "enabled": true
   },
+  "main": "./src/index.js"
   "assets": {
-    "directory": "wwwroot"
+    "directory": "./publish-output/wwwroot",
   },
   "compatibility_flags": [
     "nodejs_compat"
