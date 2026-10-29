@@ -48,7 +48,7 @@
 .input-group {
     display: flex;
     flex-direction: column;
-    gap: 6fpx;
+    gap: 6px;
     width: 100%;
 }
 
@@ -155,7 +155,7 @@ button:not(:disabled):active {
 }
 
 .solve-button {
-    background-color: var(--color-start);
+    background-color: var(--color-button-confirm);
 }
 
 .skip-button {
@@ -181,8 +181,7 @@ input[type=checkbox] {
     flex: 1;
     min-width: 0;
     aspect-ratio: var(--cols) / var(--rows);
-    max-width: calc(var(--cols) * 40px);
-    max-height: 80vh;
+    max-width: calc(min(var(--cols) * 40px, 1000px, 80vh * var(--cols) / var(--rows)));
 }
 
 .cell {

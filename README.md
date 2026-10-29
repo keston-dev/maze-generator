@@ -6,7 +6,7 @@ I created this project to learn some more foundational algorithms and to mess wi
 You can try it yourself at https://maze.kestondev.com
 
 ## Note 
-While the site itself is setup intentionally to disallow touchscreen, this website was built with desktop users in mind. Given the way the grid is generated, it would be practically impossible for me to make this work for touchscreen users.
+While the site itself is already setup to intentionally disallow touchscreen, I will still warn this website is desktop-only. Given the way the grid is generated, it would be practically impossible for me to make this work for touchscreen users.
 
 
 ## Todo / Planned features 

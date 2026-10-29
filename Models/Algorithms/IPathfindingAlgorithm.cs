@@ -5,7 +5,7 @@ namespace MazeGame.Models.Algorithms
     public interface IPathfindingAlgorithm
     {
         string Name { get; }
-        IAsyncEnumerable<AlgorithmStep> Solve(Maze maze, CancellationToken token);
+        IEnumerable<AlgorithmStep> Solve(Maze maze, CancellationToken token);
     }
     public record AlgorithmStep(int Row, int Col, AlgorithmState State);
 }

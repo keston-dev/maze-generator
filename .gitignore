@@ -3,6 +3,8 @@ obj/**
 Properties/**
 publish-output/**
 
+
+.idea/**
 # wrangler files
 .wrangler
 .dev.vars*

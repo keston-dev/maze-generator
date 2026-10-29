@@ -7,7 +7,7 @@ namespace MazeGame.Models.Algorithms
     {
         public string Name => "BFS (Breadth-First Search)";
 
-        public async IAsyncEnumerable<AlgorithmStep> Solve(Maze maze, [EnumeratorCancellation] CancellationToken token)
+        public IEnumerable<AlgorithmStep> Solve(Maze maze, CancellationToken token)
         {
             (int rootRow, int rootCol) = (0, 0);
 
@@ -34,11 +34,11 @@ namespace MazeGame.Models.Algorithms
             List<(int, int)> outputPath = new();
             
             steps.Enqueue(root);
-            yield return new AlgorithmStep(root.Row, root.Col, AlgorithmState.Frontier);
+            yield return root with { State = AlgorithmState.Frontier };
             while(steps.Count > 0 && !isFinished)
             {
                 var step = steps.Dequeue();
-                yield return new AlgorithmStep(step.Row, step.Col, AlgorithmState.Visited);
+                yield return step with { State = AlgorithmState.Visited };
                 foreach((int rOffset, int colOffset) in directions)
                 {
                     int nextRow = step.Row + rOffset; 
@@ -74,20 +74,21 @@ namespace MazeGame.Models.Algorithms
 
                             isFinished = true;
                         }
-                        if(!visited.Contains((nextRow, nextCol)))
-                        {
-                            AlgorithmStep newStep = new(nextRow, nextCol, AlgorithmState.Frontier);
-                            pathTrace.Add((newStep.Row, newStep.Col), (step.Row, step.Col));
-                            steps.Enqueue(newStep);
-                            yield return new AlgorithmStep(newStep.Row, newStep.Col, AlgorithmState.Frontier);
-                            visited.Add((newStep.Row, newStep.Col));
-                        } 
+
+                        if (visited.Contains((nextRow, nextCol))) continue;
+                        
+                        AlgorithmStep next = new(nextRow, nextCol, AlgorithmState.Frontier);
+                        pathTrace.Add((next.Row, next.Col), (step.Row, step.Col));
+                        steps.Enqueue(next);
+                        yield return new AlgorithmStep(next.Row, next.Col, AlgorithmState.Frontier);
+                        visited.Add((next.Row, next.Col));
                     }
                 }
             }
 
 
             outputPath.Reverse();
+            
             foreach((int, int) pathNode in outputPath)
             {
                 yield return new AlgorithmStep(pathNode.Item1, pathNode.Item2, AlgorithmState.Path);
